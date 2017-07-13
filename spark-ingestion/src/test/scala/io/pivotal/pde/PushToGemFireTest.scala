@@ -39,9 +39,6 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
   private var ssc: StreamingContext = _
 
-  private var cache: Cache = null
-  private var region: Region[String, String] = null
-
   private val batchDuration = Seconds(1)
 
   var clock: ClockWrapper = _
@@ -74,10 +71,10 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     val rangeStart = 1025
     val rangeEnd = 65534
     val rnd = new scala.util.Random
-    val randomRegion = "OrdersTest-" + rnd.nextInt()
-    val randomPort = rangeStart + rnd.nextInt(rangeEnd - rangeStart)
+    val randomRegion = "SimpleTest-" + rnd.nextInt()
+    //val randomPort = rangeStart + rnd.nextInt(rangeEnd - rangeStart)
 
-    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, randomPort, randomRegion, randomPort + 1, true)
+    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_SERVER_PORT, true)
 
     ssc.start()
 
@@ -87,11 +84,41 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     clock.advance(1000)
 
-    var region: Region[String, String] = null
-    eventually(timeout(15 seconds)){
+    eventually(timeout(5 seconds)){
       //region = gemfire.embRegion
 
       gemfire.embRegion.size() should be (2)
+
+      gemfire.embRegion.close()
+    }
+  }
+
+  "PushToGemFire Streaming App " should " store Orders in a CSV into a GemFire region" in {
+    val lines = mutable.Queue[RDD[String]]()
+    val dstream = ssc.queueStream(lines)
+
+    dstream.print()
+
+    val rangeStart = 1025
+    val rangeEnd = 65534
+    val rnd = new scala.util.Random
+    val randomRegion = "OrdersTest-" + rnd.nextInt()
+    //val randomPort = rangeStart + rnd.nextInt(rangeEnd - rangeStart)
+
+    gfProcessOrderCsv(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_SERVER_PORT, true)
+
+    ssc.start()
+
+    // Override the number of partitions to avoid a testing deadlock
+    // due to insufficient amount of data for each Spark worker
+    lines += ssc.sparkContext.textFile("/Users/kdunn/gdrive/SampleData/retail_demo/orders/sample_orders.tsv.gz").repartition(1)
+
+    clock.advance(10000)
+
+    eventually(timeout(15 seconds)){
+      //region = gemfire.embRegion
+
+      gemfire.embRegion.size() should be (10)
     }
   }
 
@@ -126,9 +153,9 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     ssc.start()
 
     lines += ssc.sparkContext.makeRDD(Seq("b", "c"))
-    clock.advance(2000)
+    clock.advance(1000)
 
-    eventually(timeout(3 seconds)) {
+    eventually(timeout(1 seconds)) {
       a[InvalidInputException] should be thrownBy {
         wFile.count() should be(0)
       }

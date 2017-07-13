@@ -1,10 +1,11 @@
 package io.pivotal.sample
 
+import java.math.BigInteger
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import BigInt._
 import scala.collection.mutable.Queue
-
 import org.apache.geode.cache.Cache
 import org.apache.geode.cache.CacheFactory
 import org.apache.geode.cache.DataPolicy
@@ -13,17 +14,15 @@ import org.apache.geode.cache.client.ClientCache
 import org.apache.geode.cache.client.ClientCacheFactory
 import org.apache.geode.cache.client.ClientRegionFactory
 import org.apache.geode.cache.client.ClientRegionShortcut
-
 import org.apache.geode.cache.RegionShortcut
-
+import org.apache.geode.pdx.ReflectionBasedAutoSerializer
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.streaming.dstream.{DStream, ReceiverInputDStream}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
-
-import io.pivotal.pde.Order
-import io.pivotal.pde.OrderLineItem
+import io.pivotal.pde.model.Order
+import io.pivotal.pde.model.OrderLineItem
 
 /*
 Encapsulating the GemFire objects in a single container object allows them to
@@ -59,7 +58,7 @@ object gemfire {
   /*
   The following are used for the dev/test "profile"
    */
-  var embRegion: Region[String, String] = null
+  var embRegion: Region[_, _] = null
   var embCache: Cache = null
 
   def setupGemfireEmbedded(embeddedLocatorHostPort: String, embeddedServerPort: Integer): Cache = {
@@ -69,6 +68,10 @@ object gemfire {
 
     var cf = new CacheFactory(gemfireProperties)
       .set("locators", embeddedLocatorHostPort)
+
+    cf.setPdxPersistent(true)
+    // Required for the complex types in the model
+    cf.setPdxSerializer(new ReflectionBasedAutoSerializer("io.pivotal.pde.model.*"))
 
     var c = cf.create()
 
@@ -81,7 +84,7 @@ object gemfire {
     return c
   }
 
-  def setupEmbeddedRegion(cache: Cache, regionName: String): Region[String, String] = {
+  def setupEmbeddedRegion(cache: Cache, regionName: String): Region[_, _] = {
     return cache.createRegionFactory(RegionShortcut.PARTITION).create(regionName)
   }
 
@@ -137,10 +140,10 @@ object PushToGemFireApp {
         var region: Region[String, String] = null
 
         if (isTest) {
-          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName)
+          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName).asInstanceOf[Region[String, String]]
         }
         else{
-          region = gemfire.region(locatorHost, locatorPort, regionName)
+          region = gemfire.region(locatorHost, locatorPort, regionName).asInstanceOf[Region[String, String]]
         }
 
         record.foreach { el =>
@@ -155,22 +158,24 @@ object PushToGemFireApp {
 
     stream.foreachRDD { rdd =>
       rdd.foreachPartition { record =>
-        var region: Region[Integer, Order] = null
+        var region: Region[BigInteger, Order] = null
 
         if (isTest) {
-          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName)
+          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName).asInstanceOf[Region[BigInteger, Order]]
         }
         else{
-          region = gemfire.region(locatorHost, locatorPort, regionName)
+          region = gemfire.region(locatorHost, locatorPort, regionName).asInstanceOf[Region[BigInteger, Order]]
         }
 
         record.foreach { el =>
-          val rowElements = el.map(line => line.split('\t').map(_.trim))
+          val rowElements = el.split('\t').map(_.trim)
 
-          var thisOrder = new io.pivotal.pde.Order(rowElements(0))
+          //rowElements.foreach(println)
 
-          region.put(el.toString, el.toString)
-          println(el.toString)
+          var thisOrder = new Order(new BigInteger(rowElements(0)))
+
+          region.put(thisOrder.getOrder_id(), thisOrder)
+          //println(thisOrder.toString)
         }
       }
     }

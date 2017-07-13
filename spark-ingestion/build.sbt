@@ -27,6 +27,7 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-streaming" % "2.1.1" % "provided",
   "org.apache.logging.log4j" % "log4j-core" % "2.6.1" % "provided",
   "io.pivotal.gemfire" % "geode-core" % "9.0.3",
+  "io.pivotal.pde" % "retail-sample-model" % "1.0-SNAPSHOT",
 // comment above line and uncomment the following to run in sbt
 // "org.apache.spark" %% "spark-streaming" % "1.6.1",
   "org.scalaj" %% "scalaj-http" % "2.3.0",
