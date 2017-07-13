@@ -5,8 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.pivotal.pde</groupId>
-    <artifactId>trickle-merging</artifactId>
+    <artifactId>spark-gemfire-aeq</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -16,25 +17,19 @@
     </properties>
 
     <parent>
-        <groupId>io.pivotal.pde</groupId>
-        <artifactId>spark-gemfire-aeq</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <!-- relativePath/ -->
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>1.5.4.RELEASE</version>
+        <relativePath/>
     </parent>
 
+    <modules>
+        <module>retail-sample-model</module>
+        <module>spark-ingestion</module>
+        <module>gemfire-tricklemerging</module>
+    </modules>
+
     <dependencies>
-        <dependency>
-            <groupId>io.pivotal.pde</groupId>
-            <artifactId>retail-sample-model</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.pivotal.gemfire</groupId>
-            <artifactId>geode-core</artifactId>
-            <version>${geode.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -47,14 +42,6 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>gemfire-release-repo</id>
-            <name>Pivotal GemFire Release Repository</name>
-            <url>https://commercial-repo.pivotal.io/data3/gemfire-release-repo/gemfire</url>
-        </repository>
-    </repositories>
-
     <build>
         <plugins>
             <plugin>
@@ -65,6 +52,18 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.scala-tools</groupId>
+                <artifactId>maven-scala-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

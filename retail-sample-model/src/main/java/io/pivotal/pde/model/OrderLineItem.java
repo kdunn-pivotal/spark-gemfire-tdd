@@ -1,4 +1,4 @@
-package io.pivotal.pde;
+package io.pivotal.pde.model;
 
 public class OrderLineItem {
     Integer order_id;

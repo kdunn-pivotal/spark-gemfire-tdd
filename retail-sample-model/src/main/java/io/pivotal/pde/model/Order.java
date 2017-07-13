@@ -1,4 +1,4 @@
-package io.pivotal.pde;
+package io.pivotal.pde.model;
 
 import java.util.ArrayList;
 import java.util.List;

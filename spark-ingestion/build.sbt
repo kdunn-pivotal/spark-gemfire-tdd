@@ -1,4 +1,4 @@
-name := "spark-streaming-tests"
+name := "spark-gemfire-ingestion"
  
 version := "1.0"
 

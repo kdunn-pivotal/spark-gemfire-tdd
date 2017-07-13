@@ -18,6 +18,8 @@ import org.apache.geode.cache.execute.FunctionException;
 import org.apache.geode.cache.execute.RegionFunctionContext;
 import org.apache.geode.cache.util.CacheListenerAdapter;
 
+import io.pivotal.pde.model.Order;
+import io.pivotal.pde.model.OrderLineItem;
 
 public class TrickleMergeListener extends CacheListenerAdapter implements Declarable {
 

@@ -4,13 +4,11 @@ package io.pivotal.pde;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.RegionFactory;
 import org.apache.geode.cache.RegionShortcut;
-import org.apache.geode.cache.execute.FunctionService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +17,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import io.pivotal.pde.TrickleMergeListener;
-import io.pivotal.pde.Order;
-import io.pivotal.pde.OrderLineItem;
+import io.pivotal.pde.model.Order;
+import io.pivotal.pde.model.OrderLineItem;
 import org.junit.Assert;
 
 @RunWith(SpringRunner.class)

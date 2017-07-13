@@ -22,6 +22,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.streaming.dstream.{DStream, ReceiverInputDStream}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
+import io.pivotal.pde.Order
+import io.pivotal.pde.OrderLineItem
+
 /*
 Encapsulating the GemFire objects in a single container object allows them to
 be serialized correctly for use on the Spark workers, workaround credit to:
@@ -146,7 +149,30 @@ object PushToGemFireApp {
         }
       }
     }
+  }
 
-    return
+  def gfProcessOrderCsv(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, embeddedServerPort: Integer, isTest: Boolean): Unit = {
+
+    stream.foreachRDD { rdd =>
+      rdd.foreachPartition { record =>
+        var region: Region[Integer, Order] = null
+
+        if (isTest) {
+          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName)
+        }
+        else{
+          region = gemfire.region(locatorHost, locatorPort, regionName)
+        }
+
+        record.foreach { el =>
+          val rowElements = el.map(line => line.split('\t').map(_.trim))
+
+          var thisOrder = new io.pivotal.pde.Order(rowElements(0))
+
+          region.put(el.toString, el.toString)
+          println(el.toString)
+        }
+      }
+    }
   }
 }
