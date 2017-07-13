@@ -4,3 +4,8 @@
 target
 *.iml
 *.idea
+
+spark-ingestion/*.if
+spark-ingestion/*.crf
+spark-ingestion/*.drf
+spark-ingestion/*.krf
