@@ -1,6 +1,6 @@
 package io.pivotal.pde;
 
-
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,12 +34,12 @@ public class TrickleMergeTests {
     //@Autowired
     //Region<Integer, Order> orderRegion;
 
-    public HashMap<String, List<Integer>> addSomeData(Region<Integer, Order> OrderRegion, Region<Integer, OrderLineItem> OrderLineItemRegion) {
-        Order c1 = new Order(1, 1.0f, 1f);
+    public HashMap<String, List<BigInteger>> addSomeData(Region<BigInteger, Order> OrderRegion, Region<BigInteger, OrderLineItem> OrderLineItemRegion) {
+        Order c1 = new Order(new BigInteger("1"), 1.0f, 1f);
 
-        Order c2 = new Order(2, 10.0f, 2f);
+        Order c2 = new Order(new BigInteger("2"), 10.0f, 2f);
 
-        Order c3 = new Order(3, 5500f, 3f);
+        Order c3 = new Order(new BigInteger("3"), 5500f, 3f);
 
         OrderRegion.put(c1.getOrder_id(), c1);
 
@@ -47,14 +47,14 @@ public class TrickleMergeTests {
 
         OrderRegion.put(c3.getOrder_id(), c3);
 
-        OrderLineItem c1_l1 = new OrderLineItem(1, 99, "Tickets", 1f, 1.0f);
+        OrderLineItem c1_l1 = new OrderLineItem(new BigInteger("1"), new BigInteger("99"), "Tickets", 1f, 1.0f);
 
-        OrderLineItem c2_l1 = new OrderLineItem(2, 2, "STB", 1f, 7.5f);
-        OrderLineItem c2_l2 = new OrderLineItem(2, 1, "satellite dish", 1f, 2.5f);
+        OrderLineItem c2_l1 = new OrderLineItem(new BigInteger("2"), new BigInteger("2"), "STB", 1f, 7.5f);
+        OrderLineItem c2_l2 = new OrderLineItem(new BigInteger("2"), new BigInteger("1"), "satellite dish", 1f, 2.5f);
 
-        OrderLineItem c3_l1 = new OrderLineItem(3, 1000, "commercial onboarding", 1f, 0f);
-        OrderLineItem c3_l2 = new OrderLineItem(3, 1001, "STB", 1f, 500f);
-        OrderLineItem c3_l3 = new OrderLineItem(3, 0, "annual service", 1f, 5000f);
+        OrderLineItem c3_l1 = new OrderLineItem(new BigInteger("3"), new BigInteger("1000"), "commercial onboarding", 1f, 0f);
+        OrderLineItem c3_l2 = new OrderLineItem(new BigInteger("3"), new BigInteger("1001"), "STB", 1f, 500f);
+        OrderLineItem c3_l3 = new OrderLineItem(new BigInteger("3"), new BigInteger("0"), "annual service", 1f, 5000f);
 
         OrderLineItemRegion.put(c1_l1.getOrder_item_id(), c1_l1);
 
@@ -66,16 +66,16 @@ public class TrickleMergeTests {
         OrderLineItemRegion.put(c3_l2.getOrder_item_id(), c3_l2);
         OrderLineItemRegion.put(c3_l3.getOrder_item_id(), c3_l3);
 
-        HashMap<String, List<Integer>> keys = new HashMap<String, List<Integer>>();
+        HashMap<String, List<BigInteger>> keys = new HashMap<>();
 
-        List<Integer> orderKeys = new ArrayList<Integer>();
+        List<BigInteger> orderKeys = new ArrayList<>();
         orderKeys.add(c1.getOrder_id());
         orderKeys.add(c2.getOrder_id());
         orderKeys.add(c3.getOrder_id());
 
         keys.put("orders", orderKeys);
 
-        List<Integer> orderItemKeys = new ArrayList<Integer>();
+        List<BigInteger> orderItemKeys = new ArrayList<>();
         orderItemKeys.add(c1_l1.getOrder_item_id());
         orderItemKeys.add(c2_l1.getOrder_item_id());
         orderItemKeys.add(c2_l2.getOrder_item_id());
@@ -88,22 +88,22 @@ public class TrickleMergeTests {
         return keys;
     }
 
-    public void cleanupData(Region<Integer, Order> OrderRegion, Region<Integer, OrderLineItem> OrderLineItemRegion, HashMap<String, List<Integer>> keys) {
+    public void cleanupData(Region<BigInteger, Order> OrderRegion, Region<BigInteger, OrderLineItem> OrderLineItemRegion, HashMap<String, List<BigInteger>> keys) {
         OrderRegion.removeAll(keys.get("orders"));
         OrderLineItemRegion.removeAll(keys.get("orderItems"));
     }
 
     @Test
     public void TrickleMergeTests() throws Exception {
-        RegionFactory<Integer, Order> regionFactory = cache.createRegionFactory(RegionShortcut.PARTITION);
-        Region<Integer, Order> orderRegion = regionFactory.create("Orders");
+        RegionFactory<BigInteger, Order> regionFactory = cache.createRegionFactory(RegionShortcut.PARTITION);
+        Region<BigInteger, Order> orderRegion = regionFactory.create("Orders");
 
         RegionFactory<Integer, OrderLineItem> lineItemRegionFactor = cache.createRegionFactory(RegionShortcut.PARTITION);
-        Region<Integer, OrderLineItem> orderLineItemRegion = lineItemRegionFactor
+        Region<BigInteger, OrderLineItem> orderLineItemRegion = lineItemRegionFactor
                 .addCacheListener(new TrickleMergeListener())
                 .create("OrderLineItems");
 
-        HashMap<String, List<Integer>> keys = addSomeData(orderRegion, orderLineItemRegion);
+        HashMap<String, List<BigInteger>> keys = addSomeData(orderRegion, orderLineItemRegion);
 
         Assert.assertEquals(3, orderRegion.size());
 

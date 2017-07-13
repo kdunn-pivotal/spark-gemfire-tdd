@@ -1,8 +1,10 @@
 package io.pivotal.pde.model;
 
+import java.math.BigInteger;
+
 public class OrderLineItem {
-    Integer order_id;
-    Integer order_item_id;
+    BigInteger order_id;
+    BigInteger order_item_id;
     Integer product_id;
     String product_name;
     Integer customer_id;
@@ -37,7 +39,7 @@ public class OrderLineItem {
     public OrderLineItem() {
     }
 
-    public OrderLineItem(Integer order_id, Integer order_item_id, String product_name, Float item_quantity, Float item_price) {
+    public OrderLineItem(BigInteger order_id, BigInteger order_item_id, String product_name, Float item_quantity, Float item_price) {
         this.order_id = order_id;
         this.order_item_id = order_item_id;
         this.product_name = product_name;
@@ -45,7 +47,7 @@ public class OrderLineItem {
         this.item_price = item_price;
     }
 
-    public OrderLineItem(Integer order_id, Integer order_item_id, Integer product_id, String product_name, Integer customer_id, Integer store_id, Integer item_shipment_status_code, String order_datetime, String ship_datetime, String item_return_datetime, String item_refund_datetime, Integer product_category_id, String product_category_name, Integer payment_method_code, Float tax_amount, Float item_quantity, Float item_price, Float discount_amount, Integer coupon_code, Float coupon_amount, String ship_address_line1, String ship_address_line2, String ship_address_line3, String ship_address_city, String ship_address_state, Integer ship_address_postal_code, String ship_address_country, String ship_phone_number, String ship_customer_name, String ship_customer_email_address, Integer ordering_session_id, String website_url) {
+    public OrderLineItem(BigInteger order_id, BigInteger order_item_id, Integer product_id, String product_name, Integer customer_id, Integer store_id, Integer item_shipment_status_code, String order_datetime, String ship_datetime, String item_return_datetime, String item_refund_datetime, Integer product_category_id, String product_category_name, Integer payment_method_code, Float tax_amount, Float item_quantity, Float item_price, Float discount_amount, Integer coupon_code, Float coupon_amount, String ship_address_line1, String ship_address_line2, String ship_address_line3, String ship_address_city, String ship_address_state, Integer ship_address_postal_code, String ship_address_country, String ship_phone_number, String ship_customer_name, String ship_customer_email_address, Integer ordering_session_id, String website_url) {
         this.order_id = order_id;
         this.order_item_id = order_item_id;
         this.product_id = product_id;
@@ -198,19 +200,19 @@ public class OrderLineItem {
         return result;
     }
 
-    public Integer getOrder_id() {
+    public BigInteger getOrder_id() {
         return order_id;
     }
 
-    public void setOrder_id(Integer order_id) {
+    public void setOrder_id(BigInteger order_id) {
         this.order_id = order_id;
     }
 
-    public Integer getOrder_item_id() {
+    public BigInteger getOrder_item_id() {
         return order_item_id;
     }
 
-    public void setOrder_item_id(Integer order_item_id) {
+    public void setOrder_item_id(BigInteger order_item_id) {
         this.order_item_id = order_item_id;
     }
 

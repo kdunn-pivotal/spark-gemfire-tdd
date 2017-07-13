@@ -1,5 +1,6 @@
 package io.pivotal.pde;
 
+import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class TrickleMergeListener extends CacheListenerAdapter implements Declar
         LOG.info("Executing server-side merging function");
 
         OrderLineItem orderItem = (OrderLineItem)event.getNewValue();
-        Integer orderKey = orderItem.getOrder_id();
+        BigInteger orderKey = orderItem.getOrder_id();
 
 
         LOG.info("Received a new transaction for order " + orderKey);
@@ -47,7 +48,7 @@ public class TrickleMergeListener extends CacheListenerAdapter implements Declar
         Cache cache = CacheFactory.getAnyInstance();
 
         // Get a handle on the Order region object
-        Region<Integer, Order> orderRegion = cache.getRegion("Orders");
+        Region<BigInteger, Order> orderRegion = cache.getRegion("Orders");
 
         Order o = orderRegion.get(orderKey);
 
@@ -61,43 +62,6 @@ public class TrickleMergeListener extends CacheListenerAdapter implements Declar
         LOG.info("Adding the line item: " + orderItem.getProduct_name() + " to order " + orderKey + " .");
 
         orderRegion.put(orderKey, o);
-    }
-
-    public void execute(FunctionContext context) {
-        if (!(context instanceof RegionFunctionContext)) {
-            throw new FunctionException(
-                    "This is a data aware function, and has to be called using FunctionService.onRegion.");
-        }
-        RegionFunctionContext regionFunctionContext = (RegionFunctionContext) context;
-
-        Map<String, Object> arguments = (Map<String, Object>) regionFunctionContext.getArguments();
-
-        LOG.debug("Executing server-side merging function");
-
-        // Get a handle on the server cache object
-        Cache cache = CacheFactory.getAnyInstance();
-
-        // Get handles on the live and export region objects
-        //Region<String, Customer> customerRegion = cache.getRegion("Customer");
-
-        LOG.debug(arguments.values().toString());
-
-        List<String> keysToModify = (List<String>) arguments.get("keys");
-
-        LOG.debug(keysToModify.toString());
-
-        Integer numProcessedObjects = 0;
-        for (Iterator<String> iter = keysToModify.iterator(); iter.hasNext();) {
-            String thisKey = (String) iter.next();
-
-            //customerRegion.put(thisKey, upperCaseFields(customerRegion.get(thisKey)));
-
-            //LOG.debug(customerRegion.get(thisKey).getFirstName());
-
-            ++numProcessedObjects;
-        }
-
-        context.getResultSender().lastResult(numProcessedObjects);
     }
 
 }

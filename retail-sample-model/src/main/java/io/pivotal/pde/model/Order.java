@@ -1,10 +1,11 @@
 package io.pivotal.pde.model;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Order {
-    Integer order_id;
+    BigInteger order_id;
     Integer customer_id;
     Integer store_id;
     String order_datetime;
@@ -41,17 +42,17 @@ public class Order {
     public Order() {
     }
 
-    public Order(Integer order_id) {
+    public Order(BigInteger order_id) {
         this.order_id = order_id;
     }
 
-    public Order(Integer order_id, Float total_paid_amount, Float total_item_quantity) {
+    public Order(BigInteger order_id, Float total_paid_amount, Float total_item_quantity) {
         this.order_id = order_id;
         this.total_paid_amount = total_paid_amount;
         this.total_item_quantity = total_item_quantity;
     }
 
-    public Order(Integer order_id, Integer customer_id, Integer store_id, String order_datetime, String ship_completion_datetime, String return_datetime, String refund_datetime, Integer payment_method_code, Float total_tax_amount, Float total_paid_amount, Float total_item_quantity, Float total_discount_amount, Integer coupon_code, Float coupon_amount, String order_canceled_flag, String has_returned_items_flag, String has_refunded_items_flag, Integer fraud_code, Integer fraud_resolution_code, String billing_address_line1, String billing_address_line2, String billing_address_line3, String billing_address_city, String billing_address_state, Integer billing_address_postal_code, String billing_address_country, String billing_phone_number, String customer_name, String customer_email_address, Integer ordering_session_id, String website_url) {
+    public Order(BigInteger order_id, Integer customer_id, Integer store_id, String order_datetime, String ship_completion_datetime, String return_datetime, String refund_datetime, Integer payment_method_code, Float total_tax_amount, Float total_paid_amount, Float total_item_quantity, Float total_discount_amount, Integer coupon_code, Float coupon_amount, String order_canceled_flag, String has_returned_items_flag, String has_refunded_items_flag, Integer fraud_code, Integer fraud_resolution_code, String billing_address_line1, String billing_address_line2, String billing_address_line3, String billing_address_city, String billing_address_state, Integer billing_address_postal_code, String billing_address_country, String billing_phone_number, String customer_name, String customer_email_address, Integer ordering_session_id, String website_url) {
         this.order_id = order_id;
         this.customer_id = customer_id;
         this.store_id = store_id;
@@ -204,11 +205,11 @@ public class Order {
         return result;
     }
 
-    public Integer getOrder_id() {
+    public BigInteger getOrder_id() {
         return order_id;
     }
 
-    public void setOrder_id(Integer order_id) {
+    public void setOrder_id(BigInteger order_id) {
         this.order_id = order_id;
     }
 
