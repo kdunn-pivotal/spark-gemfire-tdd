@@ -22,6 +22,11 @@ import org.apache.spark.SparkContext
 import org.apache.spark.streaming.dstream.{DStream, ReceiverInputDStream}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
+/*
+Encapsulating the GemFire objects in a single container object allows them to
+be serialized correctly for use on the Spark workers, workaround credit to:
+https://www.nicolaferraro.me/2016/02/22/using-non-serializable-objects-in-apache-spark/
+ */
 object gemfire {
 
   /*
@@ -126,7 +131,6 @@ object PushToGemFireApp {
 
     stream.foreachRDD { rdd =>
       rdd.foreachPartition { record =>
-      //rdd.foreach { record =>
         var region: Region[String, String] = null
 
         if (isTest) {
@@ -140,15 +144,8 @@ object PushToGemFireApp {
           region.put(el.toString, el.toString)
           println(el.toString)
         }
-
-        //if (region != null) region.close()
-
-        //region.put(record.toString, record.toString)
       }
     }
-
-    //if (gemfire.embRegion != null) gemfire.embRegion.close()
-    //if (gemfire.embCache != null) gemfire.embCache.close(false)
 
     return
   }

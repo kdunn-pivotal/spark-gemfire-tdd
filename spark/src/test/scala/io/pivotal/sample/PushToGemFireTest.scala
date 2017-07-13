@@ -28,7 +28,7 @@ import scala.language.postfixOps
 import scala.reflect.io.Path
 import scala.util.Try
 
-class PushToGemFireTest extends FlatSpec with Matchers with Eventually with BeforeAndAfterAll with BeforeAndAfter {
+class PushToGemFireTest extends FlatSpec with Matchers with Eventually with BeforeAndAfter {
 
   private val SPARK_MASTER = "local[3]" //"spark://Kyle-Dunn-MacBook-Pro.local:7077" //"local[*]"
   private val APP_NAME = "PushToGemFireAppTest"
@@ -46,11 +46,6 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
   var clock: ClockWrapper = _
 
-  override def beforeAll() {
-    //cache = gemfire.setupGemfireEmbedded(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", EMBEDDED_GEMFIRE_SERVER_PORT)
-    //val gemfire.embeddedRegion = setupEmbeddedRegion(cache, regionName)
-  }
-
   before {
     val conf = new SparkConf()
       .setMaster(SPARK_MASTER).setAppName(APP_NAME)
@@ -58,9 +53,6 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     ssc = new StreamingContext(conf, batchDuration)
     clock = new ClockWrapper(ssc)
-
-    //cache = gemfire.setupGemfireEmbedded(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", EMBEDDED_GEMFIRE_SERVER_PORT)
-    //val gemfire.embeddedRegion = setupEmbeddedRegion(cache, regionName)
   }
 
   after {
@@ -84,29 +76,23 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     val rnd = new scala.util.Random
     val randomRegion = "OrdersTest-" + rnd.nextInt()
     val randomPort = rangeStart + rnd.nextInt(rangeEnd - rangeStart)
-    //region = gemfire.setupEmbeddedRegion(cache, randomRegion)
 
     gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, randomPort, randomRegion, randomPort + 1, true)
 
     ssc.start()
 
-
+    // Override the number of partitions to avoid a testing deadlock
+    // due to insufficient amount of data for each Spark worker
     lines += ssc.sparkContext.makeRDD(List("b", "c")).repartition(1)
+
     clock.advance(1000)
 
     var region: Region[String, String] = null
-    eventually(timeout(30 seconds)){
-      region = gemfire.embRegion
+    eventually(timeout(15 seconds)){
+      //region = gemfire.embRegion
 
-      //region.put("b", "b")
-      //region.put("c", "c")
-
-      //val wFile: RDD[String] = ssc.sparkContext.textFile(FILE_PATH+ "-1000")
-      region.size() should be (2)
+      gemfire.embRegion.size() should be (2)
     }
-
-    //if (region != null) region.close()
-    if (gemfire.embCache != null) gemfire.embCache.close(false)
   }
 
   "PushToGemFire Streaming App " should " store empty streams if no data received" in {
@@ -115,8 +101,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     dstream.print()
     processStream(Array("", "", FILE_PATH), dstream)
-
-
+    
     ssc.start()
 
     clock.advance(1000)
@@ -150,4 +135,4 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     }
   }
 
-  }
+}
