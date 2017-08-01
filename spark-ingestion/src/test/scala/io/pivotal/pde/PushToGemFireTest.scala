@@ -1,26 +1,13 @@
 package io.pivotal.sample
 
 import io.pivotal.sample.PushToGemFireApp._
-
-import org.apache.geode.cache.Cache
-import org.apache.geode.cache.DataPolicy
-import org.apache.geode.cache.Region
-import org.apache.geode.cache.client.ClientCache
-import org.apache.geode.cache.RegionShortcut
-import org.apache.geode.cache.RegionExistsException
-import org.apache.geode.cache.client.ServerOperationException
-
+import io.pivotal.sample.gemfire.setupGemfireEmbedded
 import org.apache.hadoop.mapred.InvalidInputException
-
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.{ClockWrapper, Seconds, StreamingContext}
-
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec, Matchers}
-
-import java.util.Properties
-import java.util.concurrent.TimeUnit
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -33,9 +20,9 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
   private val SPARK_MASTER = "local[3]" //"spark://Kyle-Dunn-MacBook-Pro.local:7077" //"local[*]"
   private val APP_NAME = "PushToGemFireAppTest"
   private val FILE_PATH: String = "target/testfile"
-  private val EMBEDDED_GEMFIRE_LOCATOR_HOST = "172.16.139.1"
+  private val EMBEDDED_GEMFIRE_LOCATOR_HOST = "192.168.69.1"
   private val EMBEDDED_GEMFIRE_LOCATOR_PORT = 20334
-  private val EMBEDDED_GEMFIRE_SERVER_PORT = 40404
+  private val EMBEDDED_GEMFIRE_REST_PORT = "38080"
 
   private var ssc: StreamingContext = _
 
@@ -50,11 +37,13 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     ssc = new StreamingContext(conf, batchDuration)
     clock = new ClockWrapper(ssc)
+
+    //var cache = setupGemfireEmbedded(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404)
   }
 
   after {
     // Close the connection to GemFire
-    if (gemfire.embCache != null) gemfire.embCache.close(false)
+    //if (gemfire.embCache != null) gemfire.embCache.close(false)
 
     // Stop the Spark Streaming context
     if (ssc != null) ssc.stop()
@@ -62,7 +51,6 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     Try(Path(FILE_PATH + "-1000").deleteRecursively)
   }
 
-  /*
   "PushToGemFire Streaming App " should " store streams into a GemFire region" in {
     val lines = mutable.Queue[RDD[String]]()
     val dstream = ssc.queueStream(lines)
@@ -75,7 +63,9 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     val randomRegion = "SimpleTest-" + rnd.nextInt()
     //val randomPort = rangeStart + rnd.nextInt(rangeEnd - rangeStart)
 
-    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_SERVER_PORT, true)
+    val cache = gemfire.embeddedRegion(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404, randomRegion)
+
+    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT, true)
 
     ssc.start()
 
@@ -90,24 +80,23 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
       gemfire.embRegion.size() should be (2)
 
-      gemfire.embRegion.close()
+      //gemfire.embRegion.close()
     }
   }
-  */
 
-  "PushToGemFire Streaming App " should " store Orders in a CSV into a GemFire region" in {
+
+  "PushToGemFire Streaming App " should " store Orders from a CSV into a GemFire region via REST" in {
     val lines = mutable.Queue[RDD[String]]()
     val dstream = ssc.queueStream(lines)
 
     dstream.print()
 
-    val rangeStart = 1025
-    val rangeEnd = 65534
     val rnd = new scala.util.Random
-    val randomRegion = "OrdersTest-" + rnd.nextInt()
-    //val randomPort = rangeStart + rnd.nextInt(rangeEnd - rangeStart)
+    val randomRegion = "Orders" //Test-" + rnd.nextInt()
 
-    gfProcessOrderCsv(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_SERVER_PORT, true)
+    val cache = gemfire.embeddedRegion(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404, randomRegion)
+
+    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT, true)
 
     ssc.start()
 
@@ -115,12 +104,45 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     // due to insufficient amount of data for each Spark worker
     lines += ssc.sparkContext.textFile("/Users/kdunn/gdrive/SampleData/retail_demo/orders/sample_orders.tsv.gz").repartition(1)
 
-    clock.advance(10000)
+    clock.advance(2000)
 
-    eventually(timeout(15 seconds)){
+    eventually(timeout(2 seconds)){
       //region = gemfire.embRegion
 
       gemfire.embRegion.size() should be (10)
+
+      //gemfire.embCache.close(false)
+    }
+  }
+
+
+  "PushToGemFire Streaming App " should " store OrderLineItems from a CSV into a GemFire region via REST" in {
+    val lines = mutable.Queue[RDD[String]]()
+    val dstream = ssc.queueStream(lines)
+
+    dstream.print()
+
+    val rnd = new scala.util.Random
+    val randomRegion = "OrderLineItems" //Test-" + rnd.nextInt()
+
+    val cache = gemfire.embeddedRegion(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404, randomRegion)
+
+    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT, true)
+
+    ssc.start()
+
+    // Override the number of partitions to avoid a testing deadlock
+    // due to insufficient amount of data for each Spark worker
+    lines += ssc.sparkContext.textFile("/Users/kdunn/gdrive/SampleData/retail_demo/order_lineitems/sample_order_lineitems.tsv.gz").repartition(1)
+
+    clock.advance(2000)
+
+    eventually(timeout(2 seconds)){
+      //region = gemfire.embRegion
+
+      gemfire.embRegion.size() should be (10)
+
+      //gemfire.embCache.close(false)
     }
   }
 

@@ -59,7 +59,6 @@ object gemfire {
     var cf = new CacheFactory(gemfireProperties)
       .set("locators", embeddedLocatorHostPort)
 
-    cf.setPdxPersistent(true)
     // Required for the complex types in the model
     cf.setPdxSerializer(new ReflectionBasedAutoSerializer("io.pivotal.pde.model.*"))
 
@@ -79,7 +78,14 @@ object gemfire {
   }
 
   def embeddedRegion(embeddedLocatorHostPort: String, embeddedServerPort: Integer, regionName: String) = {
-    var cache = setupGemfireEmbedded(embeddedLocatorHostPort, embeddedServerPort)
+    var cache: Cache = null
+
+    if (embCache == null) {
+      cache = setupGemfireEmbedded(embeddedLocatorHostPort, embeddedServerPort)
+    }
+    else {
+      cache = embCache
+    }
     val _embeddedRegion = setupEmbeddedRegion(cache, regionName)
 
     embRegion = _embeddedRegion
@@ -105,7 +111,7 @@ object PushToGemFireApp {
     //stream.print()
 
     //processStream(args, stream)
-    gfProcessStream(stream, "172.16.139.1", 10334, "Orders", 0, false)
+    gfProcessStream(stream, "172.16.139.1", 10334, "Orders", "28080", false)
 
     ssc.start()
     ssc.awaitTermination()
@@ -120,42 +126,9 @@ object PushToGemFireApp {
   }
 
   def makeOrderJsonString(recordElements: String): String = {
-    val header = List("order_id",
-              "customer_id",
-              "store_id",
-              "order_datetime",
-              "ship_completion_datetime",
-              "return_datetime",
-              "refund_datetime",
-              "payment_method_code",
-              "total_tax_amount",
-              "total_paid_amount",
-              "total_item_quantity",
-              "total_discount_amount",
-              "coupon_code",
-              "coupon_amount",
-              "order_canceled_flag",
-              "has_returned_items_flag",
-              "has_refunded_items_flag",
-              "fraud_code",
-              "fraud_resolution_code",
-              "billing_address_line1",
-              "billing_address_line2",
-              "billing_address_line3",
-              "billing_address_city",
-              "billing_address_state",
-              "billing_address_postal_code",
-              "billing_address_country",
-              "billing_phone_number",
-              "customer_name",
-              "customer_email_address",
-              "ordering_session_id",
-              "website_url")
 
     val fields = recordElements.split('\t').map(_.trim)
 
-    //val jsonString = new Gson().toJson((header zip fields)).toString
-    //println(jsonString)
     val newOrder = new Order(new BigInteger(fields(0)), fields(9).toFloat, fields(10).toFloat)
 
     val jsonString = new Gson().toJson(newOrder).toString
@@ -164,34 +137,59 @@ object PushToGemFireApp {
     return jsonString
   }
 
-  def postToGemFireREST(record: String, locatorHost: String, regionName: String): Unit = {
-    //println("begin foreach")
-    var restPort = 28080
+  def makeOrderLineItemJsonString(recordElements: String): String = {
 
-    //println("before http client")
+    val fields = recordElements.split('\t').map(_.trim)
 
+    val newOrderLineItem = new OrderLineItem(
+      new BigInteger(fields(0)), new BigInteger(fields(1)), fields(3), fields(15).toFloat, fields(16).toFloat)
+
+    val jsonString = new Gson().toJson(newOrderLineItem).toString
+    println(jsonString)
+
+    return jsonString
+  }
+
+  def postToGemFireREST(record: String, locatorHost: String, restPort: String, regionName: String): Unit = {
     val client = new DefaultHttpClient
 
-    //record.foreach { el =>
     //"curl -H 'Content-Type: application/json' -X POST 10.80.2.172:28080/gemfire-api/v1/{region}?key={key} -d'{data}' "
 
-    var thisOrder: String = null
+    var thisKey: String = null
     try {
       val rowElements = record.split('\t').map(_.trim)
 
-      thisOrder = rowElements(0)
+      if (regionName == "Orders") {
+        thisKey = rowElements(0)
+      }
+      else if (regionName == "OrderLineItems") {
+        thisKey = rowElements(1)
+      }
+      else {
+        thisKey = record
+      }
+
     } catch {
       case e: java.util.NoSuchElementException => println(record)
     }
 
-    if (thisOrder != null) {
+    if (thisKey != null) {
 
-      val gemfireUrl = "http://" + locatorHost + ":" + restPort + "/gemfire-api/v1/" + regionName + "?key=" + thisOrder
+      val gemfireUrl = "http://" + locatorHost + ":" + restPort + "/gemfire-api/v1/" + regionName + "?key=" + thisKey
       //println(gemfireUrl)
 
       val post = new HttpPost(gemfireUrl)
       post.setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-      post.setEntity(new StringEntity(makeOrderJsonString(record))) //new Gson().toJson(rowElements(2))))
+
+      if (regionName == "Orders" ) {
+        post.setEntity(new StringEntity(makeOrderJsonString(record)))
+      }
+      else if (regionName == "OrderLineItems") {
+        post.setEntity(new StringEntity(makeOrderLineItemJsonString(record)))
+      }
+      else {
+        post.setEntity(new StringEntity("{ \"key\" : \"" + thisKey + "\" }"))
+      }
 
       var response: org.apache.http.client.methods.CloseableHttpResponse = null
       try {
@@ -208,42 +206,37 @@ object PushToGemFireApp {
   }
 
   // executed by the worker/executor thread
-  def gfProcessStream(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, embeddedServerPort: Integer, isTest: Boolean): Unit = {
+  def gfProcessStream(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, restPort: String, isTest: Boolean): Unit = {
 
     stream.foreachRDD { rdd =>
-      //println("begin foreachRDD")
-      //if (rdd != null) {
-        //println("begin foreachPartition - rdd not null")
-        rdd.foreachPartition { records =>
-          //if (records != null) {
-            records.foreach( record => postToGemFireREST(record, locatorHost, regionName) )
-          //}
-        }
-      //}
+      rdd.foreachPartition { records =>
+          records.foreach( record => postToGemFireREST(record, locatorHost, restPort, regionName) )
+      }
     }
   }
 
-  def gfProcessOrderCsv(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, embeddedServerPort: Integer, isTest: Boolean): Unit = {
+  def gfProcessSimple(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, embeddedServerPort: Integer, isTest: Boolean): Unit = {
 
     stream.foreachRDD { rdd =>
       rdd.foreachPartition { record =>
-        var region: Region[BigInteger, Order] = null
+        var region: Region[String, String] = null
 
         if (isTest) {
-          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName).asInstanceOf[Region[BigInteger, Order]]
+          region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", embeddedServerPort, regionName).asInstanceOf[Region[String, String]]
         }
 
         record.foreach { el =>
-          val rowElements = el.split('\t').map(_.trim)
+          //val rowElements = el.split('\t').map(_.trim)
 
           //rowElements.foreach(println)
 
-          var thisOrder = new Order(new BigInteger(rowElements(0)))
+          //var thisOrder = new Order(new BigInteger(rowElements(0)))
 
-          region.put(thisOrder.getOrder_id(), thisOrder)
+          region.put(el, el)
           //println(thisOrder.toString)
         }
       }
     }
   }
+
 }

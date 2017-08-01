@@ -21,14 +21,24 @@ addCommandAlias("sanity", ";clean ;compile ;coverage ;test; coverageReport")
 dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-core" % "2.8.2"
 dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.8.2"
 dependencyOverrides += "com.fasterxml.jackson.module" % "jackson-module-scala_2.11" % "2.8.2"
- 
+
+unmanagedJars in Compile += file("lib/geode-web-api-9.0.4.war")
+unmanagedJars in Compile += file("lib/jetty-http-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-io-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-security-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-server-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-servlet-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-util-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-webapp-9.3.6.v20151106.jar")
+unmanagedJars in Compile += file("lib/jetty-xml-9.3.6.v20151106.jar")
+
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "2.1.1" % "provided",
   "org.apache.spark" %% "spark-streaming" % "2.1.1" % "provided",
   "com.google.code.gson" % "gson" % "2.8.1",
   "org.apache.httpcomponents" % "httpclient" % "4.5.3",
   "org.apache.logging.log4j" % "log4j-core" % "2.6.1" % "provided",
-  "io.pivotal.gemfire" % "geode-core" % "9.0.3",
+  "io.pivotal.gemfire" % "geode-core" % "9.0.4",
   "io.pivotal.pde" % "retail-sample-model" % "1.0-SNAPSHOT",
 // comment above line and uncomment the following to run in sbt
 // "org.apache.spark" %% "spark-streaming" % "1.6.1",
