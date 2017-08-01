@@ -25,6 +25,8 @@ dependencyOverrides += "com.fasterxml.jackson.module" % "jackson-module-scala_2.
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "2.1.1" % "provided",
   "org.apache.spark" %% "spark-streaming" % "2.1.1" % "provided",
+  "com.google.code.gson" % "gson" % "2.8.1",
+  "org.apache.httpcomponents" % "httpclient" % "4.5.3",
   "org.apache.logging.log4j" % "log4j-core" % "2.6.1" % "provided",
   "io.pivotal.gemfire" % "geode-core" % "9.0.3",
   "io.pivotal.pde" % "retail-sample-model" % "1.0-SNAPSHOT",

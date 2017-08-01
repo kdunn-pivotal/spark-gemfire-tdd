@@ -33,7 +33,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
   private val SPARK_MASTER = "local[3]" //"spark://Kyle-Dunn-MacBook-Pro.local:7077" //"local[*]"
   private val APP_NAME = "PushToGemFireAppTest"
   private val FILE_PATH: String = "target/testfile"
-  private val EMBEDDED_GEMFIRE_LOCATOR_HOST = "192.168.69.1" // "172.16.139.1"
+  private val EMBEDDED_GEMFIRE_LOCATOR_HOST = "172.16.139.1"
   private val EMBEDDED_GEMFIRE_LOCATOR_PORT = 20334
   private val EMBEDDED_GEMFIRE_SERVER_PORT = 40404
 
@@ -62,6 +62,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
     Try(Path(FILE_PATH + "-1000").deleteRecursively)
   }
 
+  /*
   "PushToGemFire Streaming App " should " store streams into a GemFire region" in {
     val lines = mutable.Queue[RDD[String]]()
     val dstream = ssc.queueStream(lines)
@@ -92,6 +93,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
       gemfire.embRegion.close()
     }
   }
+  */
 
   "PushToGemFire Streaming App " should " store Orders in a CSV into a GemFire region" in {
     val lines = mutable.Queue[RDD[String]]()
