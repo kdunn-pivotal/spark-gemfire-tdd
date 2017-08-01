@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cache xmlns="http://geode.apache.org/schema/cache" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://geode.apache.org/schema/cache
+  http://geode.apache.org/schema/cache/cache-1.0.xsd"
+    version="1.0">
+
+    <!--pdx read-serialized="true"-->
+    <pdx>
+        <pdx-serializer>
+            <class-name>
+                org.apache.geode.pdx.ReflectionBasedAutoSerializer
+            </class-name>
+            <parameter name="classes">
+                <string>io.pivotal.pde.model.*</string>
+            </parameter>
+        </pdx-serializer>
+    </pdx>
+
+    <region name="Orders">
+        <region-attributes refid="PARTITION" concurrency-checks-enabled="false" />
+    </region>
+
+    <resource-manager eviction-heap-percentage="80"
+        critical-heap-percentage="90" />
+
+</cache>
+
+

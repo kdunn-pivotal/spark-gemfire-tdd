@@ -1,0 +1,42 @@
+.btn,
+.btn-success {
+  color: #fff;
+  background-color: #017761;
+  border-color: #000;
+}
+
+.bar {
+  fill: #017761;
+}
+
+.inputbox {
+  width: 396px;
+  height: 30px;
+  padding: 8px 12px;
+  font-size: 24px;
+  line-height: 30px;
+  border: 2px solid #ccc;
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  outline: none;
+}
+
+.inputbox {
+  background-color: #fff;
+}
+
+.inputbox:focus {
+  border: 2px solid #0097cf;
+}
+
+#searchText {
+  margin-top: 75px;	
+  margin-bottom: 35px;
+}
+
+#typetabs,
+#content {
+  padding-left: 5%;
+  padding-right: 5%;
+}
