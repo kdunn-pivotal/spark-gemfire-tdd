@@ -19,7 +19,11 @@ import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.entity.StringEntity
+
+import org.apache.geode.cache.Region
+
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 
 import io.pivotal.pde.model.Order
 import io.pivotal.pde.model.OrderLineItem
@@ -33,21 +37,23 @@ object PushToGemFireApp {
 
     val ssc = new StreamingContext(conf, Seconds(5))
 
-    val orderRdd = ssc.sparkContext.textFile("file:///Users/kdunn/gdrive/SampleData/retail_demo/orders/orders.tsv.gz")
+    val orderRdd = ssc.sparkContext.textFile(args(0))
+    //"file:///Users/kdunn/gdrive/SampleData/retail_demo/orders/10k_orders.tsv.gz")
     val orderRddQueue: Queue[RDD[String]] = Queue()
     orderRddQueue += orderRdd
 
     val orderStream = ssc.queueStream(orderRddQueue)
 
-    val orderLineItemRdd = ssc.sparkContext.textFile("file:///Users/kdunn/gdrive/SampleData/retail_demo/order_lineitems/sample_order_lineitems.tsv.gz")
+    val orderLineItemRdd = ssc.sparkContext.textFile(args(1))
+    //"file:///Users/kdunn/gdrive/SampleData/retail_demo/order_lineitems/10k_order_lineitems.tsv.gz")
     val orderLineItemRddQueue: Queue[RDD[String]] = Queue()
     orderLineItemRddQueue += orderLineItemRdd
 
     val orderLineItemStream = ssc.queueStream(orderLineItemRddQueue)
 
-    gfProcessStream(orderStream, "172.16.139.1", 10334, "Orders", "28080")
+    gfProcessStreamRest(orderStream, "172.16.139.1", 10334, "Orders", "28080")
 
-    gfProcessStream(orderLineItemStream, "172.16.139.1", 10334, "OrderLineItems", "28080")
+    gfProcessStreamRest(orderLineItemStream, "172.16.139.1", 10334, "OrderLineItems", "28080")
 
     ssc.start()
     ssc.awaitTermination()
@@ -65,9 +71,12 @@ object PushToGemFireApp {
 
     val fields = recordElements.split('\t').map(_.trim)
 
-    val newOrder = new Order(new BigInteger(fields(0)), fields(9).toFloat, fields(10).toFloat)
+    val newOrder = new Order(fields(0), fields(9).toFloat, fields(10).toFloat)
 
-    val jsonString = new Gson().toJson(newOrder).toString
+    val builder = new GsonBuilder()
+    val gson = builder.serializeNulls().create()
+
+    val jsonString = gson.toJson(newOrder).toString.replace("items\":null", "items\":[]").replace("null", "\"\"").replace("{", "{ \"@type\": \"io.pivotal.pde.model.Order\", ")
     println(jsonString)
 
     return jsonString
@@ -77,10 +86,12 @@ object PushToGemFireApp {
 
     val fields = recordElements.split('\t').map(_.trim)
 
-    val newOrderLineItem = new OrderLineItem(
-      new BigInteger(fields(0)), new BigInteger(fields(1)), fields(3), fields(15).toFloat, fields(16).toFloat)
+    val newOrderLineItem = new OrderLineItem(fields(0), fields(1), fields(3), fields(15).toFloat, fields(16).toFloat)
 
-    val jsonString = new Gson().toJson(newOrderLineItem).toString
+    val builder = new GsonBuilder()
+    val gson = builder.serializeNulls().create()
+
+    val jsonString = gson.toJson(newOrderLineItem).toString.replace("null", "\"\"").replace("{", "{ \"@type\": \"io.pivotal.pde.model.OrderLineItem\", ")
     println(jsonString)
 
     return jsonString
@@ -139,11 +150,33 @@ object PushToGemFireApp {
     }
   }
 
+  def putInGemFire(record: String, region: Region[String, Order]): Unit = {
+
+  }
+
   // executed by the worker/executor thread
-  def gfProcessStream(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, restPort: String): Unit = {
+  def gfProcessStreamRest(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, restPort: String): Unit = {
     stream.foreachRDD { rdd =>
       rdd.foreachPartition { records =>
           records.foreach( record => postToGemFireREST(record, locatorHost, restPort, regionName) )
+      }
+    }
+  }
+
+  // executed by the worker/executor thread
+  def gfProcessOrderStreamApi(stream: DStream[String], locatorHost: String, locatorPort: Integer, regionName: String, isTest: Boolean): Unit = {
+    stream.foreachRDD { rdd =>
+      rdd.foreachPartition { records =>
+        var region: Region[String, Order] = null
+
+        if (isTest) {
+          //region = gemfire.embeddedRegion(locatorHost + "[" + locatorPort + "]", 40444, regionName)
+        }
+        else{
+          //region = gemfire.region(locatorHost, locatorPort, regionName)
+        }
+
+        records.foreach( record => putInGemFire(record, region) )
       }
     }
   }

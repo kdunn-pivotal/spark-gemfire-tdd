@@ -2,7 +2,7 @@ package io.pivotal.sample
 
 import java.util.Properties
 
-import io.pivotal.sample.PushToGemFireApp.{gfProcessStream, processStream}
+import io.pivotal.sample.PushToGemFireApp.{gfProcessStreamRest, processStream}
 
 import org.apache.geode.cache.Cache
 import org.apache.geode.cache.CacheFactory
@@ -134,7 +134,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     val cache = gemfire.embeddedRegion(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404, randomRegion)
 
-    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT)
+    gfProcessStreamRest(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT)
 
     ssc.start()
 
@@ -157,7 +157,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     val cache = gemfire.embeddedRegion(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404, randomRegion)
 
-    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT)
+    gfProcessStreamRest(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT)
 
     ssc.start()
 
@@ -180,7 +180,7 @@ class PushToGemFireTest extends FlatSpec with Matchers with Eventually with Befo
 
     val cache = gemfire.embeddedRegion(EMBEDDED_GEMFIRE_LOCATOR_HOST + "[" + EMBEDDED_GEMFIRE_LOCATOR_PORT + "]", 40404, randomRegion)
 
-    gfProcessStream(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT)
+    gfProcessStreamRest(dstream, EMBEDDED_GEMFIRE_LOCATOR_HOST, EMBEDDED_GEMFIRE_LOCATOR_PORT, randomRegion, EMBEDDED_GEMFIRE_REST_PORT)
 
     ssc.start()
 
