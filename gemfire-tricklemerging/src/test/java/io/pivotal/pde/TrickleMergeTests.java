@@ -36,11 +36,11 @@ public class TrickleMergeTests {
 
     public HashMap<String, List<String>> addSomeData(Region<String, Order> OrderRegion,
                                                      Region<String, OrderLineItem> OrderLineItemRegion) throws Exception {
-        Order c1 = new Order(("1"), 1.0f, 1f);
+        Order c1 = new Order("1", 1.0f, 1f);
 
-        Order c2 = new Order(("2"), 10.0f, 2f);
+        Order c2 = new Order("2", 10.0f, 2f);
 
-        Order c3 = new Order(("3"), 5500f, 3f);
+        Order c3 = new Order("3", 5500f, 3f);
 
         OrderRegion.put(c1.getOrder_id(), c1);
 
