@@ -20,11 +20,11 @@ public class OrderRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(OrderRepository.class);
 
-    private Region<Integer, Order> orderRegion;
+    private Region<String, Order> orderRegion;
     private QueryService queryService;
 
     @Autowired
-    public OrderRepository(Region<Integer, Order> orderRegion, QueryService queryService) {
+    public OrderRepository(Region<String, Order> orderRegion, QueryService queryService) {
         this.orderRegion = orderRegion;
         this.queryService = queryService;
     }

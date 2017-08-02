@@ -16,8 +16,7 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/defaultTopic");
-        config.setApplicationDestinationPrefixes("/orders");
+        config.enableSimpleBroker("/orders");
 
         this.registryConfig = config;
     }
@@ -30,7 +29,8 @@ public class WebSocketConfiguration extends AbstractWebSocketMessageBrokerConfig
     }
 
     public void addNewBroker(String orderId) {
-        registryConfig.enableSimpleBroker("/" + orderId);
+
+        registryConfig.setApplicationDestinationPrefixes("/" + orderId);
     }
 
 }

@@ -1,4 +1,4 @@
-package io.pivotal.pde.support;
+package io.pivotal.pde.db;
 
 import org.apache.geode.cache.Operation;
 import org.apache.geode.cache.query.CqEvent;

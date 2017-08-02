@@ -4,21 +4,22 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 
+import io.pivotal.pde.model.Order;
+import org.apache.geode.cache.Region;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.apache.geode.cache.query.QueryService;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class SessionManager implements HttpSessionListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(SessionManager.class);
 
     @Autowired
-    QueryService queryService;
-
-    @Autowired
-    private WebSocketConfiguration webSocketConfiguration;
+    private Region<String, Order> orderRegion;
 
     private static int totalActiveSessions;
 
@@ -48,11 +49,11 @@ public class SessionManager implements HttpSessionListener {
         String orderId = (String)session.getAttribute("orderId");
 
         try {
-            LOG.info("Tearing down CQ for order " + orderId);
-            queryService.getCq("orderTracker-" + orderId).close();
+            LOG.info("Removing interest for order " + orderId);
+            orderRegion.unregisterInterest(orderId);
         }
         catch (Exception ex) {
-            LOG.info("FAILED tearing down CQ for order " + orderId);
+            LOG.info("FAILED removing interest for order " + orderId);
             ex.printStackTrace();
         }
     }

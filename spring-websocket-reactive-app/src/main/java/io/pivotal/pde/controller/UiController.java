@@ -2,40 +2,39 @@ package io.pivotal.pde.controller;
 
 import io.pivotal.pde.model.Order;
 import io.pivotal.pde.support.WebSocketConfiguration;
+import org.apache.geode.cache.Region;
 import org.apache.geode.cache.query.CqAttributes;
 import org.apache.geode.cache.query.CqAttributesFactory;
 import org.apache.geode.cache.query.QueryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 import io.pivotal.pde.db.OrderRepository;
-import io.pivotal.pde.support.OrderUpdateCqListener;
+import io.pivotal.pde.db.OrderUpdateCqListener;
 
 import javax.servlet.http.HttpServletRequest;
 
 @Controller
 class UiController {
 
-    @Autowired
-    private SimpMessagingTemplate webSocketMessageTemplate;
+    private static final Logger LOG = LoggerFactory.getLogger(UiController.class);
 
     @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
-    private QueryService queryService;
+    private Region<String, Order> orderRegion;
 
     @Autowired
     private WebSocketConfiguration webSocketConfiguration;
@@ -54,8 +53,12 @@ class UiController {
 
         request.getSession().setAttribute("orderId", orderId);
 
+        LOG.info("added new orderId : " + orderId + " to model.");
+
         // set up the new websocket endpoint
         webSocketConfiguration.addNewBroker(orderId);
+
+        LOG.info("created websocket broker for id : " + orderId);
 
         // Create CqAttribute using CqAttributeFactory
         CqAttributesFactory cqf = new CqAttributesFactory();
@@ -69,15 +72,19 @@ class UiController {
         String cqName = "orderTracker-" + orderId;
 
         try {
-            // register the continuous query
-            queryService.newCq("SELECT * FROM /Orders WHERE id = " + orderId, cqa);
+
+            orderRegion.registerInterest(orderId);
+
+            LOG.info("registered interest for id : " + orderId);
         }
         catch (Exception ex) {
-            ex.printStackTrace();
+            LOG.error(ex.getMessage());
+            //ex.printStackTrace();
         }
 
 
         /* static/templates/order.ftl */
         return "order";
     }
+
 }

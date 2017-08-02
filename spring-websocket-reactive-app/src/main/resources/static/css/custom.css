@@ -36,7 +36,12 @@
 }
 
 #typetabs,
-#content {
-  padding-left: 5%;
-  padding-right: 5%;
+body {
+  padding-left: 8%;
+  padding-right: 8%;
+}
+
+#orderDetail {
+  white-space: pre;
+  font-family: monospace;
 }
