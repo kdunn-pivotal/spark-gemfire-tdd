@@ -1,67 +1,114 @@
 package io.pivotal.pde;
 
 import java.math.BigInteger;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
+import org.apache.geode.cache.asyncqueue.AsyncEvent;
+import org.apache.geode.cache.asyncqueue.AsyncEventListener;
+import org.apache.geode.pdx.PdxInstance;
+import org.apache.geode.pdx.internal.PdxInstanceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.geode.cache.Cache;
 import org.apache.geode.cache.CacheFactory;
 import org.apache.geode.cache.Declarable;
-import org.apache.geode.cache.EntryEvent;
 import org.apache.geode.cache.Region;
-import org.apache.geode.cache.execute.FunctionContext;
-import org.apache.geode.cache.execute.FunctionException;
-import org.apache.geode.cache.execute.RegionFunctionContext;
-import org.apache.geode.cache.util.CacheListenerAdapter;
 
 import io.pivotal.pde.model.Order;
 import io.pivotal.pde.model.OrderLineItem;
 
-public class TrickleMergeListener extends CacheListenerAdapter implements Declarable {
+public class TrickleMergeListener implements AsyncEventListener, Declarable {
 
     private static final Logger LOG = LoggerFactory.getLogger(TrickleMergeListener.class);
 
+    private Cache cache;
+
+    private Region<String, Order> orderRegion;
+
+    private Region<BigInteger, PdxInstanceImpl> orderLineItemRegion;
+
+    public TrickleMergeListener() {
+        this.cache = CacheFactory.getAnyInstance();
+    }
+
     @Override
     public void init(Properties arg0) {
-        // TODO Auto-generated method stub
 
     }
 
-    /** Processes an afterCreate event.
-     * @param event The afterCreate EntryEvent received
-     */
-    public void afterCreate(EntryEvent event) {
-        LOG.info("Executing server-side merging function");
+    public boolean processEvents(List<AsyncEvent> list) {
 
-        OrderLineItem orderItem = (OrderLineItem)event.getNewValue();
-        BigInteger orderKey = orderItem.getOrder_id();
+        try {
+            list.forEach(item -> {
+                LOG.info("Executing server-side merging function");
 
+                orderRegion = cache.getRegion("Orders");
 
-        LOG.info("Received a new transaction for order " + orderKey);
+                orderLineItemRegion = cache.getRegion("OrderLineItems");
 
-        // Get a handle on the server cache object
-        Cache cache = CacheFactory.getAnyInstance();
+                Object li = orderLineItemRegion.get(item.getKey());
 
-        // Get a handle on the Order region object
-        Region<BigInteger, Order> orderRegion = cache.getRegion("Orders");
+                OrderLineItem lineItem = null;
+                if (li instanceof PdxInstance) {
+                    PdxInstance lineItemPdxInstance = (PdxInstance)li;
 
-        Order o = orderRegion.get(orderKey);
+                    lineItem = (OrderLineItem)lineItemPdxInstance.getObject();
+                }
+                else if (li instanceof OrderLineItem) {
+                    lineItem = (OrderLineItem)li;
+                }
+                else {
+                    LOG.error("Could not handle OrderLineItem object type " + li.getClass());
+                }
 
-        if (o == null) {
-            LOG.info("Order " + orderKey + " does not yet exist, creating it.");
-            o = new Order(orderKey);
+                if (lineItem != null) {
+                    String orderId = lineItem.getOrder_id();
+
+                    LOG.info("Received a new transaction for order " + orderId);
+
+                    Object o = orderRegion.get(orderId);
+
+                    Order order = null;
+                    if (o instanceof PdxInstance) {
+                        PdxInstance orderPdxInstance = (PdxInstance)o;
+
+                        order = (Order)orderPdxInstance.getObject();
+                    }
+                    else if (o instanceof Order) {
+                        order = (Order)o;
+                    }
+                    else if (o == null) {
+                        LOG.info("Order " + orderId + " does not yet exist, creating it.");
+                        order = new Order(orderId);
+                    }
+                    else {
+                        LOG.error("Could not handle Order object type " + o.getClass());
+
+                    }
+
+                    if (order != null) {
+                        order.addItem(lineItem);
+
+                        LOG.info("Adding the line item: " + lineItem.getProduct_name() + " to order " + orderId + " .");
+
+                        orderRegion.put(orderId, order);
+                    }
+
+                }
+
+            });
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
         }
 
-        o.addItem(orderItem);
+        return true;
+    }
 
-        LOG.info("Adding the line item: " + orderItem.getProduct_name() + " to order " + orderKey + " .");
+    @Override
+    public void close() {
 
-        orderRegion.put(orderKey, o);
     }
 
 }
