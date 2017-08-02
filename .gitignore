@@ -9,3 +9,8 @@ spark-ingestion/*.if
 spark-ingestion/*.crf
 spark-ingestion/*.drf
 spark-ingestion/*.krf
+spark-ingestion/META-INF
+spark-ingestion/lib
+
+gemfire-server/scripts/locator1
+gemfire-server/scripts/server1
