@@ -1,0 +1,11 @@
+#!/bin/bash
+
+gfsh <<EOF
+connect --locator=172.16.139.1[10334]
+
+shutdown --include-locators=true
+EOF
+
+sleep 3
+
+pkill -f gemfire

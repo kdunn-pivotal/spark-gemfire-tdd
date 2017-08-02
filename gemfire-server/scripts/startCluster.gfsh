@@ -3,8 +3,8 @@
 rm -rf locator1 server1 
 
 gfsh <<EOF
-start locator --name=locator1 --initial-heap=512m --max-heap=512m --cache-xml-file=../src/main/config/serverCache.xml --locators=172.16.139.1[10334] --mcast-port=0 --bind-address=172.16.139.1 port=10334 --include-system-classpath
+start locator --name=locator1 --initial-heap=512m --max-heap=512m --cache-xml-file=../src/main/config/serverCache.xml --locators=172.16.139.1[10334] --mcast-port=0 --bind-address=172.16.139.1 port=10334 --include-system-classpath --classpath=/Users/kdunn/repos/spark-gemfire-aeq/gemfire-tricklemerging/target/trickle-merging-1.0-SNAPSHOT.jar:/Users/kdunn/repos/spark-gemfire-aeq/retail-sample-model/target/retail-sample-model-1.0-SNAPSHOT.jar
 
-start server --name=server1 --server-port=0 --initial-heap=1024m --max-heap=1024m --start-rest-api=true --http-service-port=28080  --cache-xml-file=../src/main/config/serverCache.xml --locators=172.16.139.1[10334] --mcast-port=0 --include-system-classpath --bind-address=172.16.139.1
+start server --name=server1 --server-port=0 --initial-heap=1024m --max-heap=1024m --start-rest-api=true --http-service-port=28080  --cache-xml-file=../src/main/config/serverCache.xml --locators=172.16.139.1[10334] --mcast-port=0 --include-system-classpath --bind-address=172.16.139.1 --classpath=/Users/kdunn/repos/spark-gemfire-aeq/gemfire-tricklemerging/target/trickle-merging-1.0-SNAPSHOT.jar:/Users/kdunn/repos/spark-gemfire-aeq/retail-sample-model/target/retail-sample-model-1.0-SNAPSHOT.jar
 
 EOF

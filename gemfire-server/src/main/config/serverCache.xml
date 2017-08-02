@@ -5,20 +5,29 @@
   http://geode.apache.org/schema/cache/cache-1.0.xsd"
     version="1.0">
 
-    <!--pdx read-serialized="true"-->
-    <pdx>
+    <!-- async-event-queue id="orderLineItemQueue" persistent="true" disk-store-name="orderLineItemQueueDiskStore" parallel="true" -->
+    <async-event-queue id="orderLineItemQueue" persistent="false" parallel="true">
+        <async-event-listener>
+             <class-name>io.pivotal.pde.TrickleMergeListener</class-name>
+        </async-event-listener>
+    </async-event-queue>
+
+    <!-- pdx read-serialized="true" -->
+    <pdx read-serialized="false">
         <pdx-serializer>
-            <class-name>
-                org.apache.geode.pdx.ReflectionBasedAutoSerializer
-            </class-name>
+            <class-name>org.apache.geode.pdx.ReflectionBasedAutoSerializer</class-name>
             <parameter name="classes">
-                <string>io.pivotal.pde.model.*</string>
+                <string>io.pivotal.pde.*</string>
             </parameter>
         </pdx-serializer>
     </pdx>
 
     <region name="Orders">
         <region-attributes refid="PARTITION" concurrency-checks-enabled="false" />
+    </region>
+
+    <region name="OrderLineItems">
+        <region-attributes refid="PARTITION" concurrency-checks-enabled="false" async-event-queue-ids="orderLineItemQueue" />
     </region>
 
     <resource-manager eviction-heap-percentage="80"
